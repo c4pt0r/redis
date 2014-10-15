@@ -8,6 +8,7 @@ int jsonTypeDocSet(robj *o, robj *doc) {
 
     newroot = cJSON_Parse(doc->ptr);
     if (newroot == NULL) {
+        decrRefCount(doc);
         return -1;
     }
 

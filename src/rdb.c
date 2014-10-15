@@ -31,6 +31,7 @@
 #include "lzf.h"    /* LZF compression library */
 #include "zipmap.h"
 #include "endianconv.h"
+#include "cJSON.h"
 
 #include <math.h>
 #include <sys/types.h>
@@ -330,6 +331,19 @@ int rdbSaveStringObject(rio *rdb, robj *obj) {
     }
 }
 
+/* Save json object as rawstring */
+int rdbSaveJsonObject(rio *rdb, robj *obj) {
+    int ret;
+    char *docstr;
+    if (obj->ptr) {
+        docstr = cJSON_PrintUnformatted(obj->ptr);
+        ret = rdbSaveRawString(rdb, (unsigned char*)docstr, strlen(docstr));
+        zfree(docstr);
+        return ret;
+    }
+    return 0;
+}
+
 robj *rdbGenericLoadStringObject(rio *rdb, int encode) {
     int isencoded;
     uint32_t len;
@@ -364,6 +378,21 @@ robj *rdbLoadStringObject(rio *rdb) {
 
 robj *rdbLoadEncodedStringObject(rio *rdb) {
     return rdbGenericLoadStringObject(rdb,1);
+}
+
+robj *rdbLoadJsonDocObject(rio *rdb) {
+    robj *tmpStrObj, *ret;
+    cJSON *root;
+
+    tmpStrObj = rdbLoadStringObject(rdb);
+    root = cJSON_Parse(tmpStrObj->ptr);
+    if (root) {
+        ret = createObject(REDIS_JSON, root);
+    } else {
+        ret = NULL;
+    }
+    zfree(tmpStrObj);
+    return ret;
 }
 
 /* Save a double value. Doubles are saved as strings prefixed by an unsigned
@@ -459,6 +488,8 @@ int rdbSaveObjectType(rio *rdb, robj *o) {
             return rdbSaveType(rdb,REDIS_RDB_TYPE_HASH);
         else
             redisPanic("Unknown hash encoding");
+    case REDIS_JSON:
+        return rdbSaveType(rdb, REDIS_RDB_TYPE_JSON);
     default:
         redisPanic("Unknown object type");
     }
@@ -583,11 +614,13 @@ int rdbSaveObject(rio *rdb, robj *o) {
                 nwritten += n;
             }
             dictReleaseIterator(di);
-
         } else {
             redisPanic("Unknown hash encoding");
         }
 
+    } else if (o->type == REDIS_JSON) {
+        if ((n = rdbSaveJsonObject(rdb,o)) == -1) return -1;
+        nwritten += n;
     } else {
         redisPanic("Unknown object type");
     }
@@ -612,8 +645,6 @@ int rdbSaveKeyValuePair(rio *rdb, robj *key, robj *val,
                         long long expiretime, long long now)
 {
 
-    /* TODO ignore json bgsave */
-    if (val->type == REDIS_JSON) return 0;
     /* Save the expire time */
     if (expiretime != -1) {
         /* If this key is already expired skip it */
@@ -1030,6 +1061,8 @@ robj *rdbLoadObject(int rdbtype, rio *rdb) {
                 redisPanic("Unknown encoding");
                 break;
         }
+    } else if (rdbtype == REDIS_RDB_TYPE_JSON) {
+        if ((o = rdbLoadJsonDocObject(rdb)) == NULL) return NULL;
     } else {
         redisPanic("Unknown object type");
     }
