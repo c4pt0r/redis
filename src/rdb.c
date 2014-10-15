@@ -611,6 +611,9 @@ off_t rdbSavedObjectLen(robj *o) {
 int rdbSaveKeyValuePair(rio *rdb, robj *key, robj *val,
                         long long expiretime, long long now)
 {
+
+    /* TODO ignore json bgsave */
+    if (val->type == REDIS_JSON) return 0;
     /* Save the expire time */
     if (expiretime != -1) {
         /* If this key is already expired skip it */

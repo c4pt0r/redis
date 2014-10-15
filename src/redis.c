@@ -273,7 +273,13 @@ struct redisCommand redisCommandTable[] = {
     {"pfcount",pfcountCommand,-2,"w",0,NULL,1,1,1,0,0},
     {"pfmerge",pfmergeCommand,-2,"wm",0,NULL,1,-1,1,0,0},
     {"pfdebug",pfdebugCommand,-3,"w",0,NULL,0,0,0,0,0},
-    {"latency",latencyCommand,-2,"arslt",0,NULL,0,0,0,0,0}
+    {"latency",latencyCommand,-2,"arslt",0,NULL,0,0,0,0,0},
+    /* json support */
+    {"jsetdoc",jsetdocCommand,3,"wmF",0,NULL,1,1,1,0,0},
+    {"jgetdoc",jgetdocCommand,2,"rF",0,NULL,1,1,1,0,0},
+    {"jdeldoc",jdeldocCommand,-2,"w",0,NULL,1,-1,1,0,0},
+    {"jget",jgetCommand,3,"rF",0,NULL,1,1,1,0,0},
+    {"jset",jsetCommand,4,"wmF",0,NULL,1,1,1,0,0},
 };
 
 /*============================ Utility functions ============================ */

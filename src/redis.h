@@ -176,6 +176,7 @@ typedef long long mstime_t; /* millisecond time type. */
 #define REDIS_SET 2
 #define REDIS_ZSET 3
 #define REDIS_HASH 4
+#define REDIS_JSON 5
 
 /* Objects encoding. Some kind of objects like Strings and Hashes can be
  * internally represented in multiple ways. The 'encoding' field of the object
@@ -188,6 +189,7 @@ typedef long long mstime_t; /* millisecond time type. */
 #define REDIS_ENCODING_ZIPLIST 5 /* Encoded as ziplist */
 #define REDIS_ENCODING_INTSET 6  /* Encoded as intset */
 #define REDIS_ENCODING_SKIPLIST 7  /* Encoded as skiplist */
+#define REDIS_ENCODING_JSON 8  /* Encoded as skiplist */
 
 /* Defines related to the dump file format. To store 32 bits lengths for short
  * keys requires a lot of space, so we check the most significant 2 bits of
@@ -1399,6 +1401,16 @@ void pfcountCommand(redisClient *c);
 void pfmergeCommand(redisClient *c);
 void pfdebugCommand(redisClient *c);
 void latencyCommand(redisClient *c);
+
+/* json support functions */
+unsigned char *jsonObjectNew();
+robj *createHashObject(void);
+robj *jsonTypeLookupOrCreate(redisClient *c, robj *key);
+void jsetdocCommand(redisClient *c);
+void jgetdocCommand(redisClient *c);
+void jdeldocCommand(redisClient *c);
+void jgetCommand(redisClient *c);
+void jsetCommand(redisClient *c);
 
 #if defined(__GNUC__)
 void *calloc(size_t count, size_t size) __attribute__ ((deprecated));
