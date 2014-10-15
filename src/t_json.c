@@ -106,7 +106,7 @@ void jsonReadFieldVal(redisClient *c, robj *o, robj* param) {
 }
 
 robj *createJsonObject(void) {
-    robj *o = createObject(REDIS_JSON, NULL);
+    robj *o = createObject(REDIS_JSON, cJSON_CreateObject());
     o->encoding = REDIS_ENCODING_JSON;
     return o;
 }
